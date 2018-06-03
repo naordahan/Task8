@@ -1,6 +1,7 @@
-
 #include "Board.h"
+#include <fstream>
 
+using namespace std;
 Board::Board(){
  length=0;
  b = new Spot*[length];
@@ -127,17 +128,94 @@ Board::~Board(){
         return true;
     }
 
+    string Board::draw(int Pixels)
+    {
+    int numfile = 0;
+    int cellSize = Pixels / this->size();
+    while (true)
+        {
+        ifstream f(to_string(numfile) + ".ppm");
+        if (!f.good()) // if stream is inturupted
+            break;
+        else
+            numfile++;
+    }
+    string fname = to_string(numfile) + ".ppm";
+    int size=this->length;
+    int redC, greenC, blueC;
+    const static int dimx =Pixels, dimy =Pixels ;
+    RGB image[dimx*dimy];
+    ofstream imageFile(fname, ios::out | ios::binary);
+    //printing the grid+white background
 
-// char Board::operator[](Coordinate p2)const{
-//     if((p2.x>=length)||(p2.y>=length)){throw IllegalCoordinateException(p2.x,p2.y);}
-//     return b[p2.x][p2.y].c;
-// }
+  for (int j = 0; j < dimy; ++j)  {  // row
+    for (int i = 0; i < dimx; ++i) { // column
+    if(i%256==0||j%256==0)
+    {
+      image[dimx*j+i].red = (0);
+      image[dimx*j+i].green = (0);
+      image[dimx*i+j].blue = (0);
+      }
+    else{
+      image[dimx*j+i].red = (255);
+      image[dimx*j+i].green = (255);
+      image[dimx*j+i].blue = (255);
+      }
+    } 
+  }
+  		for (int m = 0; m < this->size(); ++m)  {  // row
+			for (int k = 0; k < this->size(); ++k) { // column
+				char c = this->b[m][k].c;
+				switch(c){
+					case 'X':
+						redC=234;
+					    	greenC=0;
+					    	blueC=59;
+						break;
+					case 'O':
+					    	redC=0;
+					   	greenC=163;
+					   	blueC=82;
+						break;
+				}
+				if(c == '.'){ //draws instead of dot a square
+					
+				}
+				else if(c == 'X'){ //draws X
+					int left=m*cellSize, right=k*cellSize;
+					for (int i = (cellSize*0.10); i <(cellSize*0.90); ++i) {
+						for (int j = 0; j <cellSize*0.01 ; ++j) {
+						//left
+						image[dimx*(i+left)+(i+(right))+j].red = redC;
+						image[dimx*(i+left)+(i+(right))+j].green = greenC;
+						image[dimx*(i+left)+(i+(right))+j].blue = blueC;
+						//right
+						image[dimx*(cellSize+left)-dimx*i+(i+right)+j].red = redC;
+						image[dimx*(cellSize+left)-dimx*i+(i+right)+j].green = greenC;
+						image[dimx*(cellSize+left)-dimx*i+(i+right)+j].blue = blueC;
+						}
+					}
+				}
+				
+				else{// c == 'O', draws O			
+				    int circle_radius=cellSize;
+				    int xmid = cellSize/2.0;
+				    int ymid = cellSize/2.0;
+				    for (int i = 0; i <cellSize ; ++i) {
+					for (int j = 0; j <cellSize ; ++j) {
+						int tempx = i;
+						int tempy = j;
+						if(pow((((i-xmid)*(i-xmid)+(j-ymid)*(j-ymid)-(((cellSize)*0.45)*((cellSize)*0.45)))),2)<=pow(cellSize,2)){
+							image[dimx*(i+m*cellSize)+(j+(k*cellSize))].green = redC;
+							image[dimx*(i+m*cellSize)+(j+(k*cellSize))].red = greenC;
+							image[dimx*(i+m*cellSize)+(j+(k*cellSize))].blue = blueC;
+						}
+					}
+				    }
+				}	
+}
+    
 
-// Spot Board::operator[](Coordinate p2)const{
-//     if((p2.x>=length)||(p2.y>=length)){throw IllegalCoordinateException(p2.x,p2.y);}
-//     return b[p2.x][p2.y];
-// }
+    }
+    }
 
-//  char Board::operator=(const Spot& s2){
-//      return s2.c;
-//  }
