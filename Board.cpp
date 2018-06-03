@@ -96,7 +96,7 @@ ostream& operator<< (ostream& os, const Board& temp_b){
     return os;
     
 }
-istream& operator>> (istream& input, Board& b_out){
+istream& operator>> (istream& input,  Board& b_out){
     string s;
     cin>>s;
     uint l=s.length();
@@ -163,59 +163,103 @@ Board::~Board(){
       }
     } 
   }
-  		for (int m = 0; m < this->size(); ++m)  {  // row
-			for (int k = 0; k < this->size(); ++k) { // column
-				char c = this->b[m][k].c;
-				switch(c){
-					case 'X':
-						redC=234;
-					    	greenC=0;
-					    	blueC=59;
-						break;
-					case 'O':
-					    	redC=0;
-					   	greenC=163;
-					   	blueC=82;
-						break;
-				}
-				if(c == '.'){ //draws instead of dot a square
-					
-				}
-				else if(c == 'X'){ //draws X
-					int left=m*cellSize, right=k*cellSize;
-					for (int i = (cellSize*0.10); i <(cellSize*0.90); ++i) {
-						for (int j = 0; j <cellSize*0.01 ; ++j) {
-						//left
-						image[dimx*(i+left)+(i+(right))+j].red = redC;
-						image[dimx*(i+left)+(i+(right))+j].green = greenC;
-						image[dimx*(i+left)+(i+(right))+j].blue = blueC;
-						//right
-						image[dimx*(cellSize+left)-dimx*i+(i+right)+j].red = redC;
-						image[dimx*(cellSize+left)-dimx*i+(i+right)+j].green = greenC;
-						image[dimx*(cellSize+left)-dimx*i+(i+right)+j].blue = blueC;
-						}
-					}
-				}
-				
-				else{// c == 'O', draws O			
-				    int circle_radius=cellSize;
-				    int xmid = cellSize/2.0;
-				    int ymid = cellSize/2.0;
-				    for (int i = 0; i <cellSize ; ++i) {
-					for (int j = 0; j <cellSize ; ++j) {
-						int tempx = i;
-						int tempy = j;
-						if(pow((((i-xmid)*(i-xmid)+(j-ymid)*(j-ymid)-(((cellSize)*0.45)*((cellSize)*0.45)))),2)<=pow(cellSize,2)){
-							image[dimx*(i+m*cellSize)+(j+(k*cellSize))].green = redC;
-							image[dimx*(i+m*cellSize)+(j+(k*cellSize))].red = greenC;
-							image[dimx*(i+m*cellSize)+(j+(k*cellSize))].blue = blueC;
-						}
-					}
-				    }
-				}	
-}
-    
+    string fileName="myboard.ppm";
+    ifstream file(fileName);
+    bool myfileExist=false;
+    if(file){
+        //cout<< "i's exist!!!"<<'\n';
+        myfileExist=true;
+    }
+    int i=1;
+    while(myfileExist){  //if we have pic alredy
+        fileName="MyBoard";
+        fileName+=to_string(i);
+        fileName+=".ppm";
 
+        ifstream file(fileName);
+        if(file){i++;}
+        else{myfileExist=false;}
     }
-    }
+    //create new file
+    ofstream imgFile(fileName);
+    imgFile<<"P6"<<'\n'<< dimx << " " << dimy << '\n' << 255 <<'\n';
+    // start building the pic:   
+    // create mat for pixel:   
+    RGB imge[dimx*dimy];
+    //background color
+    for(int j=0; j<dimy;j++){  // row
+       for(int i=0; i<dimx;i++){ // column               
+           imge[(dimx*j)+i]={240,240,24};           
+         }
+    } 
+    int cellsize = dimx/length; //size for each coordinate
+    //lets make speration lines
+    //Drawing the cols
+	for (int i = 0; i < length; ++i) {
+		int Xfrom = i * (cellsize);
+		for (int r = 3; r < dimy - 3 ; ++r) {
+            imge[dimy * (r) + Xfrom]={0,0,0};			
+		}
+	}
+	//Drawing the rows
+	for (int j = 0; j < length; ++j) {
+		int Yfrom = j * (cellsize) ;
+		for (int r = 3; r < dimx - 3 ; ++r) {
+            imge[(r) + Yfrom * dimy]={0,0,0};
+		}
+	}
+	int loop = 0;
+	//Drawing symbols
+	for (int row = 0; row < length; ++row) {
+		for (int column = 0; column < length; ++column) {
+            //coordinate for moving between cells
+			int Xfrom = column * (cellsize);
+			int Xto = (column + 1) * (cellsize); //dont include the last bit
+			int Yfrom = row * (cellsize) ;
+			int Yto = (row + 1) * (cellsize); //dont include the last bit
+			if (b[row][column] == 'X') {
+                //Drawing X
+                Dex(imge,Xfrom,Xto,Yfrom,Yto,dimy);  			
+			}
+			else if(b[row][column] == 'O'){
+				//Drawing O
+                 Dcircle(imge,Xfrom,Xto,Yfrom,Yto,dimy);    
+			}
+		}
+	}
+    imgFile.write(reinterpret_cast<char*>(&imge),3*dimx*dimy);
+    imgFile.close();
+    return fileName;
+}
+void Dcircle(RGB* imge,int Xfrom,int Xto,int Yfrom,int Yto,int dimy){
+    int R = ((Xto - Xfrom) / 2) -(int)((Xto-5 - Xfrom+5)%10);  //redius - need to fix
+				int Ox = (Xto - Xfrom) / 2 ;      // xmid
+				int Oy = (Yto - Yfrom) / 2 ;      //ymid
+    //  a nicer circale with the help of yossi
+                for (int y=0; y<2*R; y++){
+                    for (int x=0; x<2*R; x++){
+                        if ( floor(sqrt( (x-Ox)*(x-Ox) + (y-Oy)*(y-Oy) ) ) == R-10 ) {
+                            imge[dimy * (y + Yfrom) + Xfrom + x]={0,0,255};
+                            imge[dimy * (y + Yfrom) + Xfrom + x+1]={0,0,255};
+                            imge[dimy * (y + Yfrom) + Xfrom + x+2]={0,0,255};
+                            imge[dimy * (y + Yfrom) + Xfrom + x-1]={0,0,255};
+                        }
+                    }
+                }              
+}
+void Dex(RGB* imge,int Xfrom,int Xto,int Yfrom,int Yto,int dimy){
+    //func tha draw x
+    for (int r = 10; r < Yto - Yfrom - 10 ; ++r) {
+					//Drawing main diagonal of X
+                    imge[dimy * (r + Yfrom) + Xfrom + r]={255,0,0};
+                    //make shape bigger/bold
+                    imge[dimy * (r + Yfrom) + Xfrom + r-1]={255,0,0};
+                    imge[dimy * (r + Yfrom) + Xfrom + r+1]={255,0,0};					
+					//Drawing secondery diagonal of X
+                    imge[dimy * (r + Yfrom) + Xto - (r)]={255,0,0};
+                    //make shape bigger/bold
+                    imge[dimy * (r + Yfrom) + Xto - (r)-1]={255,0,0};
+                    imge[dimy * (r + Yfrom) + Xto - (r)+1]={255,0,0};
+	}  
+}
 

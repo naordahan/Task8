@@ -30,6 +30,8 @@ class Board{
        bool operator==(const Board &b2) const;
        string draw (int Pixels);
        friend ostream& operator<< (ostream& os, const Board& b);//output
-       friend istream& operator>> (istream& input, Board& b);//input
+       friend istream& operator>> (istream& input,  Board& b);//input
+       void Dcircle(RGB* imge,int Xfrom,int Xto,int Yfrom,int Yto,int dimy); //draws a circle
+       void Dex(RGB* imge,int Xfrom,int Xto,int Yfrom,int Yto,int dimy); // draws an aixs
         ~Board();
 };
